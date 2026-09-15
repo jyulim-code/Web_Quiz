@@ -90,12 +90,11 @@ function renderQuizHome() {
 function renderMain() {
   const user = getUser() || guestUser();
   const savedCount = Object.keys(getProgressMap()).length;
-  shell(`<section class="hero"><div class="hero-content">
+  shell(`<section class="hero"><div class="hero-main"><div class="hero-content">
     <h1>반도체·디스플레이<br/>퀴즈</h1>
     <p>“게임하면서 직무 역량을 키워보세요!”</p>
     <div class="hero-actions"><button class="big-choice display" onclick="goDomain('display')"><span class="choice-icon" aria-hidden="true">&#9638;</span>디스플레이</button><button class="big-choice semi" onclick="goDomain('semiconductor')"><span class="choice-icon" aria-hidden="true">&#9670;</span>반도체</button></div>
-    <div class="stat-strip"><div class="stat-card"><div class="label">나의 레벨</div><div class="value">Lv. ${levelFromScore(user.score)}</div></div><div class="stat-card"><div class="label">누적 점수</div><div class="value">${user.score.toLocaleString()}</div></div><div class="stat-card"><div class="label">정답률</div><div class="value">${percent(user.correct, user.solved)}%</div></div><div class="stat-card"><div class="label">저장된 퀴즈</div><div class="value">${savedCount}</div></div></div>
-  </div><div class="hero-circuit" aria-hidden="true"></div></section>
+  </div><div class="hero-circuit" aria-hidden="true"></div></div><div class="stat-strip"><div class="stat-card"><div class="label">나의 레벨</div><div class="value">Lv. ${levelFromScore(user.score)}</div></div><div class="stat-card"><div class="label">누적 점수</div><div class="value">${user.score.toLocaleString()}</div></div><div class="stat-card"><div class="label">정답률</div><div class="value">${percent(user.correct, user.solved)}%</div></div><div class="stat-card"><div class="label">저장된 퀴즈</div><div class="value">${savedCount}</div></div></div></section>
   <div class="grid two-col" style="margin-top:18px"><section class="panel"><h2 class="section-title">새로 추가된 기능</h2><p class="small-title">직무별 문제 확장, 이어풀기, 고난도 모드에 더해 오답노트와 학습 분석 그래프를 추가했습니다.</p><div class="row"><span class="tag">일반 모드: 시간 제한 없음</span><span class="tag">고난도: 문제당 15초</span><span class="tag">중간 저장</span><span class="tag">오답노트</span><span class="tag">정답률 그래프</span></div></section><section class="panel"><h2 class="section-title">게임 규칙</h2><p>일반 정답 +10점, 고난도 정답 +20점입니다. 연속 정답 시 콤보 보너스가 붙고, 해설은 면접 답변 수준으로 제공합니다.</p></section></div>`, 'main');
 }
 
