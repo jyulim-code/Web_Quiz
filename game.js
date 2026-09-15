@@ -42,15 +42,17 @@ const MINI_GAMES = [
   { id: 'catch', title: 'Cleanroom Catch', korean: '클린룸 바구니 받기', domain: 'both', tag: '디스플레이 · 반도체', description: '오염은 피하고 깨끗한 공정 아이템을 바구니에 담아보세요.', icon: '♧' }
 ];
 
-function renderGame(filter = 'all') {
+function renderGame(filter = 'all', fromHistory = false) {
   stopGameLoop();
+  if (!fromHistory) history.pushState({ appPage: 'game', filter }, '', location.href);
   const games = MINI_GAMES.filter(game => filter === 'all' || game.domain === filter || game.domain === 'both');
   const filterButtons = [['all', '전체 게임'], ['display', '디스플레이'], ['semiconductor', '반도체']].map(([key, label]) => `<button class="game-filter ${filter === key ? 'active' : ''}" onclick="renderGame('${key}')">${label}</button>`).join('');
   const cards = games.map(game => `<article class="game-card"><div class="game-card-icon">${game.icon}</div><div class="game-card-content"><span class="game-card-tag ${game.domain}">${game.tag}</span><h2>${game.korean}</h2><p>${game.description}</p><button class="primary-btn" onclick="openMiniGame('${game.id}')">게임 시작</button></div></article>`).join('');
   shell(`<section class="game-hub"><div class="game-hub-heading"><div><span class="eyebrow">LEARNING ARCADE</span><h1 class="section-title">게임으로 배우는 산업 기초</h1><p class="small-title">디스플레이와 반도체 현장에서 만나는 품질·색·공정 개념을 가볍게 익혀보세요.</p></div></div><div class="game-filters" role="tablist" aria-label="게임 분야 선택">${filterButtons}</div><div class="game-card-grid">${cards}</div></section>`, filter === 'all' ? 'game' : filter === 'display' ? 'game-display' : 'game-semiconductor');
 }
 
-function openMiniGame(id) {
+function openMiniGame(id, fromHistory = false) {
+  if (!fromHistory) history.pushState({ appPage: 'mini', game: id }, '', location.href);
   if (id === 'catch') return renderCatchGame();
   if (id === 'defect') return renderDefectHunter();
   if (id === 'color') return renderColorEngineer();
@@ -58,34 +60,42 @@ function openMiniGame(id) {
   if (id === 'photo') return renderPhotoLithography();
 }
 
-function gameBackButton(domain) { return `<button class="ghost-btn" onclick="renderGame('${domain}')">게임 목록으로</button>`; }
+function gameBackButton(domain) { return `<button class="ghost-btn" onclick="goBack()">뒤로 가기</button>`; }
 
 function renderDefectHunter() {
   stopGameLoop();
-  shell(`<section class="mini-game-page"><div class="mini-game-head"><div><span class="eyebrow">DEFECT HUNTER · 디스플레이</span><h1 class="section-title">픽셀 불량 찾기</h1><p class="small-title">정상 픽셀 사이에 숨은 불량을 제한 시간 안에 찾아보세요.</p></div><div class="mini-game-stats"><strong id="defectScore">0점</strong><span id="defectTimer">30초</span></div></div><div class="defect-board" id="defectBoard"></div><p class="game-feedback" id="defectFeedback">불량 픽셀을 찾아 클릭하세요.</p><div class="mini-game-footer"><span>불량 유형: Dead Pixel · Bright Pixel · Line Defect · Mura</span>${gameBackButton('display')}</div></section>`, 'game-display');
-  startDefectRound();
+  window.defectGame = { stage: 1, score: 0 };
+  shell(`<section class="mini-game-page"><div class="mini-game-head"><div><span class="eyebrow">DEFECT HUNTER · 디스플레이</span><h1 class="section-title">픽셀 불량 찾기</h1><p class="small-title">스테이지마다 20초 안에 불량 픽셀 10개를 찾아보세요.</p></div><div class="mini-game-stats"><strong id="defectStage">STAGE 1</strong><strong id="defectScore">0점</strong><span id="defectTimer">20초</span></div></div><div class="defect-board" id="defectBoard"></div><p class="game-feedback" id="defectFeedback">불량 픽셀 10개를 찾아 클릭하세요.</p><div class="mini-game-footer"><span>불량 유형: Dead Pixel · Bright Pixel · Line Defect · Mura</span>${gameBackButton('display')}</div></section>`, 'game-display');
+  startDefectRound(1);
 }
 
-function startDefectRound() {
+function startDefectRound(stage = 1) {
   const board = document.querySelector('#defectBoard');
   const score = document.querySelector('#defectScore');
   const timer = document.querySelector('#defectTimer');
   if (!board) return;
-  let seconds = 30;
-  let points = 0;
-  const size = window.innerWidth < 620 ? 12 : 18;
-  const defectIndex = Math.floor(Math.random() * size * size);
-  const types = [{ name: 'Dead Pixel', className: 'dead', points: 30 }, { name: 'Bright Pixel', className: 'bright', points: 25 }, { name: 'Line Defect', className: 'line', points: 20 }, { name: 'Mura', className: 'mura', points: 40 }];
-  const defect = types[Math.floor(Math.random() * types.length)];
-  board.innerHTML = Array.from({ length: size * size }, (_, index) => `<button class="pixel ${index === defectIndex ? defect.className : ''}" aria-label="픽셀 ${index + 1}" onclick="selectDefectPixel(${index}, ${defectIndex}, '${defect.name}', ${defect.points})"></button>`).join('');
+  const stageSettings = [{ columns: 18, rows: 10 }, { columns: 24, rows: 12 }, { columns: 30, rows: 14 }];
+  const { columns, rows } = stageSettings[Math.min(stage - 1, stageSettings.length - 1)];
+  const totalPixels = columns * rows;
+  const targetCount = 10;
   const previousScore = window.defectGame?.score || 0;
-  window.defectGame = { seconds, score: previousScore, answer: defectIndex, interval: setInterval(() => { seconds -= 1; window.defectGame.seconds = seconds; if (timer) timer.textContent = `${seconds}초`; if (seconds <= 0) { clearInterval(window.defectGame.interval); board.classList.add('defect-failed'); const feedback = document.querySelector('#defectFeedback'); if (feedback) feedback.textContent = `시간 초과. 정답은 ${defect.name}이었습니다.`; } }, 1000) };
+  const defectIndexes = shuffle(Array.from({ length: totalPixels }, (_, index) => index)).slice(0, targetCount);
+  const types = [{ name: 'Dead Pixel', className: 'dead', points: 30 }, { name: 'Bright Pixel', className: 'bright', points: 25 }, { name: 'Line Defect', className: 'line', points: 20 }, { name: 'Mura', className: 'mura', points: 40 }];
+  const defects = Object.fromEntries(defectIndexes.map(index => [index, types[Math.floor(Math.random() * types.length)]]));
+  let seconds = 20;
+  board.style.setProperty('--defect-columns', columns);
+  board.style.setProperty('--defect-rows', rows);
+  board.innerHTML = Array.from({ length: totalPixels }, (_, index) => `<button class="pixel ${defects[index]?.className || ''}" aria-label="픽셀 ${index + 1}" onclick="selectDefectPixel(${index})"></button>`).join('');
+  window.defectGame = { seconds, score: previousScore, stage, found: 0, target: targetCount, defects, interval: setInterval(() => { seconds -= 1; window.defectGame.seconds = seconds; if (timer) timer.textContent = `${seconds}초`; if (seconds <= 0) { clearInterval(window.defectGame.interval); board.classList.add('defect-failed'); const feedback = document.querySelector('#defectFeedback'); if (feedback) feedback.textContent = `시간 초과. ${window.defectGame.found}/${targetCount}개를 찾았습니다. 다시 도전하세요.`; } }, 1000) };
+  const stageLabel = document.querySelector('#defectStage');
+  if (stageLabel) stageLabel.textContent = `STAGE ${stage}`;
   if (score) score.textContent = `${previousScore}점`;
 }
 
-function selectDefectPixel(index, answer, name, points) {
+function selectDefectPixel(index) {
   if (!window.defectGame) return;
-  if (index === answer) { clearInterval(window.defectGame.interval); window.defectGame.score += points; const score = document.querySelector('#defectScore'); const feedback = document.querySelector('#defectFeedback'); if (score) score.textContent = `${window.defectGame.score}점`; if (feedback) feedback.textContent = `정답! ${name} +${points}점`; const pixel = document.querySelectorAll('.pixel')[index]; if (pixel) pixel.classList.add('pixel-found'); document.querySelector('#defectBoard').classList.add('defect-success'); setTimeout(startDefectRound, 900); } else { const board = document.querySelector('#defectBoard'); const feedback = document.querySelector('#defectFeedback'); board.classList.remove('defect-wrong'); void board.offsetWidth; board.classList.add('defect-wrong'); if (feedback) feedback.textContent = '여기는 정상 픽셀입니다. 다른 픽셀을 찾아보세요.'; }
+  const defect = window.defectGame.defects[index];
+  if (defect) { window.defectGame.found += 1; window.defectGame.score += defect.points; const score = document.querySelector('#defectScore'); const feedback = document.querySelector('#defectFeedback'); const pixel = document.querySelectorAll('.pixel')[index]; if (pixel) { pixel.classList.add('pixel-found'); pixel.disabled = true; } if (score) score.textContent = `${window.defectGame.score}점`; if (window.defectGame.found >= window.defectGame.target) { clearInterval(window.defectGame.interval); document.querySelector('#defectBoard').classList.add('defect-success'); if (feedback) feedback.textContent = `스테이지 ${window.defectGame.stage} 클리어! 다음 스테이지를 준비하세요.`; setTimeout(() => startDefectRound(window.defectGame.stage + 1), 900); } else if (feedback) feedback.textContent = `불량 발견 ${window.defectGame.found}/${window.defectGame.target} · ${defect.name} +${defect.points}점`; } else { const board = document.querySelector('#defectBoard'); const feedback = document.querySelector('#defectFeedback'); board.classList.remove('defect-wrong'); void board.offsetWidth; board.classList.add('defect-wrong'); if (feedback) feedback.textContent = `여기는 정상 픽셀입니다. ${window.defectGame.found}/${window.defectGame.target}개 발견`; }
 }
 
 function renderColorEngineer(level = 1) {
