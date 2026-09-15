@@ -74,8 +74,9 @@ function startDefectRound(stage = 1) {
   const score = document.querySelector('#defectScore');
   const timer = document.querySelector('#defectTimer');
   if (!board) return;
-  const stageSettings = [{ columns: 18, rows: 10 }, { columns: 24, rows: 12 }, { columns: 30, rows: 14 }];
-  const { columns, rows } = stageSettings[Math.min(stage - 1, stageSettings.length - 1)];
+  const stageSettings = [{ columns: 30, rows: 14 }, { columns: 32, rows: 15 }, { columns: 34, rows: 16 }, { columns: 36, rows: 17 }, { columns: 38, rows: 18 }, { columns: 40, rows: 19 }, { columns: 42, rows: 20 }, { columns: 44, rows: 21 }, { columns: 46, rows: 22 }, { columns: 48, rows: 23 }];
+  const currentStage = Math.min(stage, stageSettings.length);
+  const { columns, rows } = stageSettings[currentStage - 1];
   const totalPixels = columns * rows;
   const targetCount = 10;
   const previousScore = window.defectGame?.score || 0;
@@ -86,16 +87,16 @@ function startDefectRound(stage = 1) {
   board.style.setProperty('--defect-columns', columns);
   board.style.setProperty('--defect-rows', rows);
   board.innerHTML = Array.from({ length: totalPixels }, (_, index) => `<button class="pixel ${defects[index]?.className || ''}" aria-label="픽셀 ${index + 1}" onclick="selectDefectPixel(${index})"></button>`).join('');
-  window.defectGame = { seconds, score: previousScore, stage, found: 0, target: targetCount, defects, interval: setInterval(() => { seconds -= 1; window.defectGame.seconds = seconds; if (timer) timer.textContent = `${seconds}초`; if (seconds <= 0) { clearInterval(window.defectGame.interval); board.classList.add('defect-failed'); const feedback = document.querySelector('#defectFeedback'); if (feedback) feedback.textContent = `시간 초과. ${window.defectGame.found}/${targetCount}개를 찾았습니다. 다시 도전하세요.`; } }, 1000) };
+  window.defectGame = { seconds, score: previousScore, stage: currentStage, found: 0, target: targetCount, defects, interval: setInterval(() => { seconds -= 1; window.defectGame.seconds = seconds; if (timer) timer.textContent = `${seconds}초`; if (seconds <= 0) { clearInterval(window.defectGame.interval); board.classList.add('defect-failed'); const feedback = document.querySelector('#defectFeedback'); if (feedback) feedback.textContent = `시간 초과. ${window.defectGame.found}/${targetCount}개를 찾았습니다. 다시 도전하세요.`; } }, 1000) };
   const stageLabel = document.querySelector('#defectStage');
-  if (stageLabel) stageLabel.textContent = `STAGE ${stage}`;
+  if (stageLabel) stageLabel.textContent = `STAGE ${currentStage}`;
   if (score) score.textContent = `${previousScore}점`;
 }
 
 function selectDefectPixel(index) {
   if (!window.defectGame) return;
   const defect = window.defectGame.defects[index];
-  if (defect) { window.defectGame.found += 1; window.defectGame.score += defect.points; const score = document.querySelector('#defectScore'); const feedback = document.querySelector('#defectFeedback'); const pixel = document.querySelectorAll('.pixel')[index]; if (pixel) { pixel.classList.add('pixel-found'); pixel.disabled = true; } if (score) score.textContent = `${window.defectGame.score}점`; if (window.defectGame.found >= window.defectGame.target) { clearInterval(window.defectGame.interval); document.querySelector('#defectBoard').classList.add('defect-success'); if (feedback) feedback.textContent = `스테이지 ${window.defectGame.stage} 클리어! 다음 스테이지를 준비하세요.`; setTimeout(() => startDefectRound(window.defectGame.stage + 1), 900); } else if (feedback) feedback.textContent = `불량 발견 ${window.defectGame.found}/${window.defectGame.target} · ${defect.name} +${defect.points}점`; } else { const board = document.querySelector('#defectBoard'); const feedback = document.querySelector('#defectFeedback'); board.classList.remove('defect-wrong'); void board.offsetWidth; board.classList.add('defect-wrong'); if (feedback) feedback.textContent = `여기는 정상 픽셀입니다. ${window.defectGame.found}/${window.defectGame.target}개 발견`; }
+  if (defect) { window.defectGame.found += 1; window.defectGame.score += defect.points; const score = document.querySelector('#defectScore'); const feedback = document.querySelector('#defectFeedback'); const pixel = document.querySelectorAll('.pixel')[index]; if (pixel) { pixel.classList.add('pixel-found'); pixel.disabled = true; } if (score) score.textContent = `${window.defectGame.score}점`; if (window.defectGame.found >= window.defectGame.target) { clearInterval(window.defectGame.interval); document.querySelector('#defectBoard').classList.add('defect-success'); if (window.defectGame.stage < 10) { if (feedback) feedback.textContent = `스테이지 ${window.defectGame.stage} 클리어! 다음 스테이지를 준비하세요.`; setTimeout(() => startDefectRound(window.defectGame.stage + 1), 900); } else if (feedback) feedback.textContent = '스테이지 10 클리어! 모든 픽셀 검사를 완료했습니다.'; } else if (feedback) feedback.textContent = `불량 발견 ${window.defectGame.found}/${window.defectGame.target} · ${defect.name} +${defect.points}점`; } else { const board = document.querySelector('#defectBoard'); const feedback = document.querySelector('#defectFeedback'); board.classList.remove('defect-wrong'); void board.offsetWidth; board.classList.add('defect-wrong'); if (feedback) feedback.textContent = `여기는 정상 픽셀입니다. ${window.defectGame.found}/${window.defectGame.target}개 발견`; }
 }
 
 function renderColorEngineer(level = 1) {
