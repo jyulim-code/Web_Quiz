@@ -64,6 +64,11 @@ function nav(active = route.page) {
         <button class="${active==='semiconductor'?'active':''}" onclick="goDomain('semiconductor')">반도체</button>
         <button class="${active==='create'?'active':''}" onclick="requireLogin(()=>go('create'))">문제 만들기</button>
       </div>
+      <button class="side-parent ${active==='game' || active==='game-display' || active==='game-semiconductor'?'active':''}" onclick="go('game')"><span>게임</span><span>›</span></button>
+      <div class="side-children">
+        <button class="${active==='game-display'?'active':''}" onclick="go('game-display')">디스플레이 게임</button>
+        <button class="${active==='game-semiconductor'?'active':''}" onclick="go('game-semiconductor')">반도체 게임</button>
+      </div>
       <button class="side-parent ${active==='mypage' || active==='wrongnote' || active==='analysis'?'active':''}" onclick="requireLogin(()=>go('mypage'))"><span>마이 페이지</span><span>›</span></button>
       <div class="side-children">
         <button class="${active==='wrongnote'?'active':''}" onclick="requireLogin(()=>go('wrongnote'))">오답 노트</button>
@@ -75,7 +80,6 @@ function nav(active = route.page) {
         <button class="${active==='study-room'?'active':''}" onclick="go('study-room')">학습방</button>
         <button class="${active==='job-room'?'active':''}" onclick="go('job-room')">취업 정보 공유방</button>
       </div>
-      <button class="side-parent ${active==='game'?'active':''}" onclick="go('game')"><span>게임</span><span>›</span></button>
     </nav>
     <div class="sidebar-footer">${user ? `<button class="danger-btn" onclick="logout()">로그아웃</button>` : `<button onclick="go('login')">로그인</button>`}</div>
   </aside>
@@ -122,6 +126,6 @@ function achievementView(user) { const all = ['OLED 마스터', '공정 입문�
 function handleAuth(e, mode) { e.preventDefault(); const form = new FormData(e.target); const email = form.get('email'); const password = form.get('password'); let user = getUser(); if (mode === 'signup' || !user) { user = { name: form.get('name') || email.split('@')[0], email, password, score: 0, solved: 0, correct: 0, bestCombo: 0, lastDomain: '전체', history: [], achievements: [] }; } else if (user.email !== email || user.password !== password) { alert('저장된 계정과 일치하지 않습니다. 데모 버전에서는 같은 브라우저에서 가입한 계정으로 로그인하세요.'); return; } saveUser(user); go('main'); }
 function logout() { localStorage.removeItem(STORAGE_KEY); go('main'); }
 function requireLogin(next) { if (!getUser()) go('login'); else next(); }
-function go(page) { stopTimer(); route = { page, domain: null, category: null }; if (page === 'main') renderMain(); if (page === 'quiz') renderQuizHome(); if (page === 'login') renderAuth('login'); if (page === 'signup') renderAuth('signup'); if (page === 'mypage') requireLogin(renderMypage); if (page === 'wrongnote') requireLogin(renderWrongNote); if (page === 'analysis') requireLogin(renderAnalysis); if (page === 'create') requireLogin(renderCreateQuestion); if (page === 'community') renderCommunity(); if (page === 'study-room') renderStudyRoom(); if (page === 'job-room') renderCommunity('job'); if (page === 'ranking') renderRanking(); if (page === 'game') renderGame(); }
+function go(page) { stopTimer(); route = { page, domain: null, category: null }; if (page === 'main') renderMain(); if (page === 'quiz') renderQuizHome(); if (page === 'login') renderAuth('login'); if (page === 'signup') renderAuth('signup'); if (page === 'mypage') requireLogin(renderMypage); if (page === 'wrongnote') requireLogin(renderWrongNote); if (page === 'analysis') requireLogin(renderAnalysis); if (page === 'create') requireLogin(renderCreateQuestion); if (page === 'community') renderCommunity(); if (page === 'study-room') renderStudyRoom(); if (page === 'job-room') renderCommunity('job'); if (page === 'ranking') renderRanking(); if (page === 'game') renderGame('all'); if (page === 'game-display') renderGame('display'); if (page === 'game-semiconductor') renderGame('semiconductor'); }
 function goDomain(domain) { stopTimer(); route = { page: domain, domain, category: null }; renderDomain(domain); }
 renderMain();
