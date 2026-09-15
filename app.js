@@ -75,12 +75,13 @@ function nav(active = route.page) {
         <button class="${active==='study-room'?'active':''}" onclick="go('study-room')">학습방</button>
         <button class="${active==='job-room'?'active':''}" onclick="go('job-room')">취업 정보 공유방</button>
       </div>
+      <button class="side-parent ${active==='game'?'active':''}" onclick="go('game')"><span>게임</span><span>›</span></button>
     </nav>
     <div class="sidebar-footer">${user ? `<button class="danger-btn" onclick="logout()">로그아웃</button>` : `<button onclick="go('login')">로그인</button>`}</div>
   </aside>
   <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleSidebar()"></div>`;
 }
-function shell(content, active) { stopTimer(); app.innerHTML = `<main class="app-shell">${nav(active)}${content}</main>`; }
+function shell(content, active) { stopTimer(); if (typeof stopGameLoop === 'function') stopGameLoop(); app.innerHTML = `<main class="app-shell">${nav(active)}${content}</main>`; }
 function toggleSidebar() { const sidebar = document.querySelector('#sidebar'); const backdrop = document.querySelector('#sidebarBackdrop'); if (!sidebar || !backdrop) return; const open = sidebar.classList.toggle('open'); backdrop.classList.toggle('open', open); sidebar.setAttribute('aria-hidden', String(!open)); }
 
 function renderQuizHome() {
@@ -121,6 +122,6 @@ function achievementView(user) { const all = ['OLED 마스터', '공정 입문�
 function handleAuth(e, mode) { e.preventDefault(); const form = new FormData(e.target); const email = form.get('email'); const password = form.get('password'); let user = getUser(); if (mode === 'signup' || !user) { user = { name: form.get('name') || email.split('@')[0], email, password, score: 0, solved: 0, correct: 0, bestCombo: 0, lastDomain: '전체', history: [], achievements: [] }; } else if (user.email !== email || user.password !== password) { alert('저장된 계정과 일치하지 않습니다. 데모 버전에서는 같은 브라우저에서 가입한 계정으로 로그인하세요.'); return; } saveUser(user); go('main'); }
 function logout() { localStorage.removeItem(STORAGE_KEY); go('main'); }
 function requireLogin(next) { if (!getUser()) go('login'); else next(); }
-function go(page) { stopTimer(); route = { page, domain: null, category: null }; if (page === 'main') renderMain(); if (page === 'quiz') renderQuizHome(); if (page === 'login') renderAuth('login'); if (page === 'signup') renderAuth('signup'); if (page === 'mypage') requireLogin(renderMypage); if (page === 'wrongnote') requireLogin(renderWrongNote); if (page === 'analysis') requireLogin(renderAnalysis); if (page === 'create') requireLogin(renderCreateQuestion); if (page === 'community') renderCommunity(); if (page === 'study-room') renderStudyRoom(); if (page === 'job-room') renderCommunity('job'); if (page === 'ranking') renderRanking(); }
+function go(page) { stopTimer(); route = { page, domain: null, category: null }; if (page === 'main') renderMain(); if (page === 'quiz') renderQuizHome(); if (page === 'login') renderAuth('login'); if (page === 'signup') renderAuth('signup'); if (page === 'mypage') requireLogin(renderMypage); if (page === 'wrongnote') requireLogin(renderWrongNote); if (page === 'analysis') requireLogin(renderAnalysis); if (page === 'create') requireLogin(renderCreateQuestion); if (page === 'community') renderCommunity(); if (page === 'study-room') renderStudyRoom(); if (page === 'job-room') renderCommunity('job'); if (page === 'ranking') renderRanking(); if (page === 'game') renderGame(); }
 function goDomain(domain) { stopTimer(); route = { page: domain, domain, category: null }; renderDomain(domain); }
 renderMain();
